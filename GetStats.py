@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import requests
 import bs4
 import sqlite3
@@ -43,23 +44,11 @@ class SocPrime(object):
             cols = [ele.text.strip() for ele in cols]
             parsed_data.append([ele for ele in cols if ele])
         for entry in parsed_data:
-            digit_counter = 0
-            for item in entry:
-                tmp = item.replace(" ","").replace("\n","")
-                if not tmp.isdigit() and tmp in possible_modes: 
-                    rule["mode"] = item
-                elif not tmp.isdigit() and not tmp in possible_modes: 
-                    rule["rule"] = item
-                elif tmp.isdigit():
-                    if digit_counter == 0: 
-                        rule["unlocks"] = int(tmp[0])
-                    elif digit_counter == 1: 
-                        rule["downloads"] = int(tmp[0])
-                    elif digit_counter == 2: 
-                        rule["views"] = int(tmp[0])
-                    else: 
-                        break
-                    digit_counter +=1
+            rule["rule"] = entry[0]
+            rule["mode"] = entry[1]
+            rule["unlocks"] = int(entry[2].split("\n")[0])
+            rule["downloads"] = int(entry[3].split("\n")[0]) 
+            rule["views"] = int(entry[4].split("\n")[0])
             complete_rules.append(rule.copy())
         return complete_rules
 
@@ -174,7 +163,7 @@ if __name__ == "__main__":
     current_year = time.strftime("%Y")
     print(f"::: SOC PRIME STATISTICS FOR YEAR OF {current_year} :::")
     print("::: Connecting to Soc Prime :::")
-    socprime = SocPrime("email","password")
+    socprime = SocPrime("ur email","ur pass")
     content = socprime.login()
     if not content: quit() # exit if failed to login
     parsed_stats = socprime.parse_content(content)
@@ -184,7 +173,6 @@ if __name__ == "__main__":
     db = Database(f"Soc_Prime_Stats_{current_year}.db")
     if not db.connect_DB():
         print("::: Failed to connect to db exiting... :::")
-        quit()
     print("::: Querying db for rules :::")
     if not db.print_all_rules():
         db.init_data_if_empty(parsed_stats)
